@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育平台</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #login-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        input {
+            display: block;
+            margin: 10px auto;
+            padding: 8px;
+            width: 80%;
+            max-width: 300px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #main-content {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .subjects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .subject-btn {
+            padding: 15px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .subject-btn:hover {
+            background: #e9ecef;
+        }
+        #subject-content {
+            display: none;
+            margin-top: 20px;
+        }
+        .submodule {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .submodule-content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+        @media (max-width: 768px) {
+            .subjects {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="login-modal">
+        <div id="login-form">
+            <h2>登录</h2>
+            <input type="text" id="username" placeholder="账号">
+            <input type="password" id="password" placeholder="密码">
+            <button onclick="login()">登录</button>
+            <p id="error-msg" style="color: red; display: none;">账号或密码错误</p>
+        </div>
+    </div>
+    <div id="main-content">
+        <h1>主页</h1>
+        <div class="subjects">
+            <div class="subject-btn" onclick="showSubject('语文')">语文</div>
+            <div class="subject-btn" onclick="showSubject('数学')">数学</div>
+            <div class="subject-btn" onclick="showSubject('日语')">日语</div>
+            <div class="subject-btn" onclick="showSubject('物理')">物理</div>
+            <div class="subject-btn" onclick="showSubject('化学')">化学</div>
+            <div class="subject-btn" onclick="showSubject('地理')">地理</div>
+        </div>
+        <div id="subject-content">
+            <h2 id="subject-title"></h2>
+            <button onclick="createSubmodule()">创建子模块</button>
+            <div id="submodules"></div>
+            <button onclick="backToMain()">返回主页</button>
+        </div>
+    </div>
+
+    <script>
+        const correctUsername = 'chen0678';
+        const correctPassword = '985211';
+        let currentSubject = '';
+        let data = {
+            '语文': [],
+            '数学': [],
+            '日语': [],
+            '物理': [],
+            '化学': [],
+            '地理': []
+        };
+
+        // Load data from localStorage if available
+        if (localStorage.getItem('educationData')) {
+            data = JSON.parse(localStorage.getItem('educationData'));
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (username === correctUsername && password === correctPassword) {
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        function showSubject(subject) {
+            currentSubject = subject;
+            document.getElementById('subject-title').innerText = subject;
+            document.querySelector('.subjects').style.display = 'none';
+            document.getElementById('subject-content').style.display = 'block';
+            renderSubmodules();
+        }
+
+        function backToMain() {
+            document.getElementById('subject-content').style.display = 'none';
+            document.querySelector('.subjects').style.display = 'grid';
+        }
+
+        function createSubmodule() {
+            const name = prompt('请输入子模块名称：');
+            if (name) {
+                const submodule = { name, content: [] };
+                data[currentSubject].push(submodule);
+                saveData();
+                renderSubmodules();
+            }
+        }
+
+        function renderSubmodules() {
+            const submodulesDiv = document.getElementById('submodules');
+            submodulesDiv.innerHTML = '';
+            data[currentSubject].forEach((sub, index) => {
+                const subDiv = document.createElement('div');
+                subDiv.className = 'submodule';
+                subDiv.innerHTML = `<h3>${sub.name}</h3><div class="submodule-content"></div>
+                    <button onclick="addText(${index})">添加文字</button>
+                    <button onclick="addImage(${index})">添加图片</button>`;
+                sub.content.forEach(item => {
+                    if (item.type === 'text') {
+                        const p = document.createElement('p');
+                        p.innerText = item.value;
+                        subDiv.querySelector('.submodule-content').appendChild(p);
+                    } else if (item.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = item.value;
+                        subDiv.querySelector('.submodule-content').appendChild(img);
+                    }
+                });
+                submodulesDiv.appendChild(subDiv);
+            });
+        }
+
+        function addText(index) {
+            const text = prompt('请输入文字：');
+            if (text) {
+                data[currentSubject][index].content.push({ type: 'text', value: text });
+                saveData();
+                renderSubmodules();
+            }
+        }
+
+        function addImage(index) {
+            const url = prompt('请输入图片URL：');
+            if (url) {
+                data[currentSubject][index].content.push({ type: 'image', value: url });
+                saveData();
+                renderSubmodules();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('educationData', JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
